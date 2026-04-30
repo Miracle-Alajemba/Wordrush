@@ -8,9 +8,11 @@
     "start": "node src/index.js"
   },
   "dependencies": {
+    "@polkadot/api": "^12.3.1",
+    "@polkadot/util": "^12.3.1",
+    "@polkadot/util-crypto": "^12.3.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
-    "express": "^4.21.2",
-    "viem": "^2.48.1"
+    "express": "^4.21.2"
   }
 }

@@ -1,40 +1,70 @@
-# Contracts
+# Portaldot WordPot Smart Contracts
 
-WordPot now includes a deployable escrow scaffold in [WordPotArena.sol](/home/miracle-alajemba/Documents/wordpot/contracts/WordPotArena.sol).
+This directory contains the Ink! smart contract for WordPot on Portaldot (Polkadot ecosystem).
 
 ## What The Contract Does
 
-1. holds room entry fees
-2. keeps the treasury cut
-3. stores player scores after settlement
-4. lets players claim rewards proportionally
+1. Manages game rooms and player entries
+2. Holds room entry fees in POT (Portaldot native token)
+3. Keeps treasury cut (10% of fees)
+4. Stores player scores after settlement
+5. Distributes rewards proportionally to players
+
+## Technology Stack
+
+- **Language**: Ink! (Rust-based DSL for Polkadot smart contracts)
+- **Build Tool**: cargo-contract
+- **Network**: Portaldot (Polkadot ecosystem)
+- **Token**: POT (Portaldot native token)
+
+## Prerequisites
+
+```bash
+# Install Rust
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+# Install cargo-contract
+cargo install cargo-contract
+
+# Verify installation
+cargo contract --version
+```
 
 ## Setup
 
-Copy `.env.example` to `.env` inside `contracts/` and set:
+Copy `.env.example` to `.env` and set:
 
-- `TREASURY_WALLET`
-- `DEPLOYER_PRIVATE_KEY`
-- optional RPC URLs
+- `PORTALDOT_RPC`: Portaldot RPC endpoint
+- `CONTRACT_DEPLOYER_PRIVATE_KEY`: Deployer account key
+- `TREASURY_WALLET`: Address to receive treasury fees
 
 ## Commands
 
 ```bash
-cd contracts
-npm install
-npm run compile
-npm run deploy:sepolia
+# Build the contract
+npm run build
+
+# Run tests
+npm run test
+
+# Upload to Portaldot testnet
+npm run upload
+
+# Instantiate contract
+npm run instantiate
 ```
 
-When you are happy with the flow, deploy to mainnet:
+## Deployment Flow
 
-```bash
-npm run deploy:mainnet
-```
+1. Run `npm run build` to compile Ink! contract
+2. Run `npm run upload` to deploy to Portaldot testnet
+3. Copy the deployed contract address
+4. Set `VITE_CONTRACT_ADDRESS` in `client/.env.local`
+5. Set `SERVER_CONTRACT_ADDRESS` in `server/.env`
+6. Restart backend server
+7. Test contract interaction from frontend
 
-After deployment:
+## Contract Interface
 
-1. copy the deployed address
-2. set `WORDPOT_CONTRACT_ADDRESS` in `server/.env`
-3. restart the server
-4. wire the client join flow to `joinRoom()` instead of treasury beta payment
+See [ink/README.md](./ink/README.md) for detailed contract implementation and function documentation.
+

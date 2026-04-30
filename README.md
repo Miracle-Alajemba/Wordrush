@@ -1,53 +1,79 @@
-# WordPot
+# WordPot - Portaldot Edition
 
-WordPot is a MiniPay-first multiplayer word game where players join a live room,
+WordPot is a multiplayer word game built on Polkadot (via Portaldot). Players join live rooms,
 make words from a shared source word, and compete for a score-based share of the
-reward pool.
+reward pool. This version brings WordPot to the Polkadot ecosystem.
 
-## Live App
+## Project Status
 
-- App: https://wordpot.vercel.app/
-- Celo Mainnet Contract: `0x764b3f8761CEB44e6FFA6480484b706C3c3A8284`
-- Explorer: https://celoscan.io/address/0x764b3f8761CEB44e6FFA6480484b706C3c3A8284
+🚀 **Building for Portaldot Mini Hackathon (Deadline: May 31, 2026)**
+
+Original Celo version: https://wordpot.vercel.app/
 
 ## Stack
 
-- `client/`: React + Vite + viem
-- `server/`: Node.js + Express
-- `contracts/`: Solidity + Hardhat
-- `network`: Celo Mainnet
+- `client/`: React 19 + Vite + @polkadot/api
+- `server/`: Node.js + Express + @polkadot/api
+- `contracts/`: Ink! (Rust) + cargo-contract
+- `network`: Portaldot (Polkadot ecosystem)
 
-## MiniPay Direction
+## Game Features
 
-WordPot is being built as a MiniPay-ready social game on Celo. The product
-direction is focused on:
+- Multiplayer real-time word game
+- Polkadot wallet connection (Polkadot.js browser extension)
+- Onchain room entry with POT (Portaldot token)
+- Score-based reward distribution
+- Treasury fee system (10% treasury, 90% reward pool)
+- 60-second game rounds
 
-- MiniPay wallet connection and wallet-based player identity
-- real onchain room entry activity on Celo Mainnet
-- mobile-first multiplayer play for live room creation and repeat usage
-- a simple game loop that can bring real users and real transactions onchain
+## Development Roadmap
 
-## What Is Live Now
+**Phase 1** (Day 1): Project Setup ✅
+- Updated dependencies (wagmi → @polkadot/api)
+- Created Ink! contract directory structure
+- Created Portaldot configuration files
 
-- Practice arena
-- Quick match rooms
-- Wallet-based player identity
-- Shared room feed and scoreboard
-- Tile tap plus typing input
-- Beta onchain join flow from the lobby
+**Phase 2** (Days 2-4): Ink! Smart Contract
+- Define contract structure
+- Implement game room logic
+- Deploy to testnet
 
-## Onchain Plan
+**Phase 3** (Days 5-6): Polkadot Wallet Integration
+- Replace Reown AppKit with Polkadot.js
+- Implement wallet connection flow
 
-WordPot is being upgraded in two stages:
+**Phase 4** (Days 7-8): Backend Adaptation
+- Update contract interaction layer
+- Refactor for Polkadot API
 
-1. `Beta join flow`
-   - players can send a real Celo mainnet transaction from the lobby
-   - the tx hash is recorded on the room
-   - this starts generating real onchain activity, fees, and transaction count
+**Phase 5** (Days 9-10): Frontend Adaptation
+- Update UI for Portaldot
+- Integrate Polkadot wallet
 
-2. `Contract payout flow`
-   - the `contracts/WordPotArena.sol` scaffold holds room entry fees
-   - keeps a treasury cut
+**Phase 6** (Days 11-12): Testing & QA
+
+**Phase 7** (Days 13-14): Hackathon Submission
+
+## Getting Started
+
+```bash
+# Install dependencies
+cd client && npm install
+cd ../server && npm install
+
+# Setup environment
+cp .env.portaldot .env.local
+
+# Development
+cd client && npm run dev
+cd ../server && npm run dev
+```
+
+## Original Celo Version
+
+- App: https://wordpot.vercel.app/
+- Contract: `0x764b3f8761CEB44e6FFA6480484b706C3c3A8284`
+- Mainnet: Celo
    - supports score-based reward claims after settlement
 
 ## Project Structure
