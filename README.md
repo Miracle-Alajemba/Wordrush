@@ -29,24 +29,29 @@ Original Celo version: https://wordpot.vercel.app/
 ## Development Roadmap
 
 **Phase 1** (Day 1): Project Setup ✅
+
 - Updated dependencies (wagmi → @polkadot/api)
 - Created Ink! contract directory structure
 - Created Portaldot configuration files
 
 **Phase 2** (Days 2-4): Ink! Smart Contract
+
 - Define contract structure
 - Implement game room logic
 - Deploy to testnet
 
 **Phase 3** (Days 5-6): Polkadot Wallet Integration
+
 - Replace Reown AppKit with Polkadot.js
 - Implement wallet connection flow
 
 **Phase 4** (Days 7-8): Backend Adaptation
+
 - Update contract interaction layer
 - Refactor for Polkadot API
 
 **Phase 5** (Days 9-10): Frontend Adaptation
+
 - Update UI for Portaldot
 - Integrate Polkadot wallet
 
@@ -74,7 +79,7 @@ cd ../server && npm run dev
 - App: https://wordpot.vercel.app/
 - Contract: `0x764b3f8761CEB44e6FFA6480484b706C3c3A8284`
 - Mainnet: Celo
-   - supports score-based reward claims after settlement
+  - supports score-based reward claims after settlement
 
 ## Project Structure
 
