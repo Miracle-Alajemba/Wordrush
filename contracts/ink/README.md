@@ -5,6 +5,7 @@ This directory contains the Polkadot-based WordPot smart contract written in Ink
 ## Setup Instructions
 
 ### Prerequisites
+
 - Rust toolchain (install from https://rustup.rs/)
 - Cargo contract tool: `cargo install cargo-contract`
 - ink! library support
@@ -28,6 +29,7 @@ cargo contract test
 ## Contract Functions
 
 ### GameRoom Management
+
 - `create_room(entry_fee: u128, round_duration: u64) -> RoomId`
 - `join_room(room_id: RoomId, player_address: AccountId) -> Result`
 - `submit_word(room_id: RoomId, word: String) -> Result`
@@ -42,6 +44,7 @@ cargo contract upload --manifest-path contracts/ink/Cargo.toml
 ```
 
 ## TODO
+
 - [ ] Define Ink! contract structure
 - [ ] Implement game room logic
 - [ ] Implement reward distribution

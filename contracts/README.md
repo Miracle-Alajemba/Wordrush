@@ -67,4 +67,3 @@ npm run instantiate
 ## Contract Interface
 
 See [ink/README.md](./ink/README.md) for detailed contract implementation and function documentation.
-

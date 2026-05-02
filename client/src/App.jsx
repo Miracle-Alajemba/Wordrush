@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { zeroAddress } from "viem";
 import { AppBottomNav, ChatMessage } from "./components/ui/index.js";
 import {
   HomeScreen,
@@ -12,10 +11,10 @@ import {
 } from "./components/screens/index.js";
 import {
   API_BASE_URL,
-  CELO_MAINNET_CHAIN_ID,
   GAME_RULES,
+  WALLET_STORAGE_KEY,
+  ROOM_SESSION_STORAGE_KEY,
 } from "./config/index.js";
-import { useWalletSession } from "./hooks/index.js";
 import {
   clearRoomSession,
   isWalletAddress,
@@ -24,22 +23,14 @@ import {
   shortenWalletAddress,
 } from "./utils/index.js";
 
-const WORDPOT_ARENA_ABI = [
-  {
-    inputs: [{ internalType: "uint256", name: "roomId", type: "uint256" }],
-    name: "joinRoom",
-    outputs: [],
-    stateMutability: "payable",
-    type: "function",
-  },
-  {
-    inputs: [{ internalType: "uint256", name: "roomId", type: "uint256" }],
-    name: "claimReward",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-];
+// MVP: Mock wallet for development/testing
+const generateMockWallet = () => {
+  const existing = localStorage.getItem("wordrush_test_wallet");
+  if (existing) return existing;
+  const mock = `0x${Array(40).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join('')}`;
+  localStorage.setItem("wordrush_test_wallet", mock);
+  return mock;
+};
 
 export default function App() {
   const [screen, setScreen] = useState("home");
@@ -59,57 +50,27 @@ export default function App() {
     showEarnings: true,
     showRank: true,
   });
-  const {
-    walletAddress,
-    walletStatus,
-    walletChainId,
-    hasInjectedProvider,
-    isMiniPay,
-    walletProviderName,
-    walletNetworkLabel,
-    walletReady,
-    connectWallet,
-    disconnectWallet,
-    ensureCeloMainnet,
-    parseChainId,
-    getInjectedProvider,
-    getPublicClient,
-    getWalletClient,
-    setWalletStatus,
-  } = useWalletSession();
+  
+  // MVP: Simple mock wallet instead of complex wallet session
+  const [walletAddress, setWalletAddress] = useState(() => 
+    localStorage.getItem(WALLET_STORAGE_KEY) || generateMockWallet()
+  );
 
+  // Save wallet to storage when it changes
+  useEffect(() => {
+    localStorage.setItem(WALLET_STORAGE_KEY, walletAddress);
+  }, [walletAddress]);
+  
+  const walletReady = true; // MVP: Always ready
+  const walletStatus = "connected"; // MVP: Always connected
+  
   const walletHint = useMemo(() => {
-    if (!walletAddress.trim()) return "";
-    const valid = isWalletAddress(walletAddress.trim());
-    return valid
-      ? walletReady
-        ? `Room identity will show as ${shortenWalletAddress(walletAddress.trim())} and your wallet is ready for Celo mainnet play.`
-        : `Room identity will show as ${shortenWalletAddress(walletAddress.trim())}. Switch to Celo Mainnet before paying to join a live room.`
-      : "Connected account is not a valid EVM wallet address.";
-  }, [walletAddress, walletReady]);
-  const walletConnectLabel = useMemo(() => {
-    if (walletAddress) {
-      return walletReady ? "Reconnect Wallet" : "Switch to Celo";
-    }
+    return `Playing as ${shortenWalletAddress(walletAddress)}`;
+  }, [walletAddress]);
 
-    if (isMiniPay) return "Connect MiniPay";
-    return "Connect Wallet";
-  }, [isMiniPay, walletAddress, walletReady]);
-  const walletEnvironmentHint = useMemo(() => {
-    if (isMiniPay) {
-      return "MiniPay is available in this session, so room payments can stay fully inside the wallet flow.";
-    }
-
-    if (hasInjectedProvider) {
-      return "";
-    }
-
-    return "Open WordPot inside MiniPay to test the real Celo wallet flow from connection to room payment.";
-  }, [hasInjectedProvider, isMiniPay]);
-  const paymentProviderLabel = useMemo(() => {
-    if (isMiniPay) return "Pay with MiniPay";
-    return "Pay";
-  }, [isMiniPay]);
+  const walletConnectLabel = "Connected";
+  const walletEnvironmentHint = "MVP: Local game mode";
+  const paymentProviderLabel = "Join";
 
   useEffect(() => {
     if (!isWalletAddress(walletAddress)) return undefined;
@@ -170,17 +131,7 @@ export default function App() {
 
   async function handleHomeJoin() {
     setRoomError("");
-
-    if (!walletAddress) {
-      await connectWallet();
-      return;
-    }
-
-    if (!walletReady) {
-      await connectWallet();
-      return;
-    }
-
+    // MVP: Auto-connect with mock wallet
     await handleQuickMatch();
   }
 

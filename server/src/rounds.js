@@ -8,6 +8,7 @@ const MIN_FOUR_PLUS_LETTER_WORDS = 8;
 const CACHE_TTL_MS = 10 * 60 * 1000;
 const API_TIMEOUT_MS = 5000;
 const MAX_RETRIES = 2;
+const WORD_VALIDATION_CACHE_TTL_MS = 60 * 60 * 1000;
 
 const BUNDLED_DICTIONARY_PATH = fileURLToPath(
   new URL("../english-words.txt", import.meta.url),
@@ -49,6 +50,7 @@ let dictionaryWords = [];
 let isCacheRefilling = false;
 let cacheRefillPromise = null;
 const derivedWordsCache = new Map();
+const dictionaryApiValidationCache = new Map();
 
 // ✅ FIX: Fisher-Yates shuffle (unbiased)
 function shuffle(items) {
@@ -166,6 +168,61 @@ function isDictionaryWord(word) {
   if (!dictionary.length) return false;
 
   return dictionary.includes(normalized);
+}
+
+function getCachedDictionaryApiValidation(word) {
+  const cached = dictionaryApiValidationCache.get(word);
+  if (!cached) return null;
+  if (Date.now() > cached.expiresAt) {
+    dictionaryApiValidationCache.delete(word);
+    return null;
+  }
+  return cached.valid;
+}
+
+function setCachedDictionaryApiValidation(word, valid) {
+  dictionaryApiValidationCache.set(word, {
+    valid,
+    expiresAt: Date.now() + WORD_VALIDATION_CACHE_TTL_MS,
+  });
+}
+
+export async function isValidDictionaryWordViaApi(word) {
+  const normalized = String(word || "")
+    .trim()
+    .toLowerCase();
+
+  if (!normalized || !/^[a-z]+$/.test(normalized)) return false;
+
+  const cached = getCachedDictionaryApiValidation(normalized);
+  if (cached !== null) return cached;
+
+  try {
+    const url = new URL(DATAMUSE_API_URL);
+    url.searchParams.set("sp", normalized);
+    url.searchParams.set("max", "1");
+
+    const response = await fetchWithTimeout(url, API_TIMEOUT_MS);
+    if (!response.ok) {
+      throw new Error(`Datamuse returned ${response.status}`);
+    }
+
+    const payload = await response.json();
+    const isValid = Array.isArray(payload)
+      ? payload.some(
+          (entry) =>
+            String(entry?.word || "").trim().toLowerCase() === normalized,
+        )
+      : false;
+
+    setCachedDictionaryApiValidation(normalized, isValid);
+    return isValid;
+  } catch {
+    // Fallback to local dictionary so gameplay still works if API is down.
+    const fallbackValid = isDictionaryWord(normalized);
+    setCachedDictionaryApiValidation(normalized, fallbackValid);
+    return fallbackValid;
+  }
 }
 
 function makeRound(sourceWord) {

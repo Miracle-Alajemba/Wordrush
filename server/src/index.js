@@ -1,7 +1,11 @@
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
-import { canBuildFromSource, getDynamicRound } from "./rounds.js";
+import {
+  canBuildFromSource,
+  getDynamicRound,
+  isValidDictionaryWordViaApi,
+} from "./rounds.js";
 import { createWordPotContractService } from "./wordpot-contract.js";
 
 dotenv.config();
@@ -13,8 +17,8 @@ const MAX_PLAYERS = 5;
 const ROUND_SECONDS = 60;
 const TREASURY_WALLET =
   process.env.TREASURY_WALLET || "0x0000000000000000000000000000000000000000";
-const WORDPOT_CONTRACT_ADDRESS =
-  process.env.WORDPOT_CONTRACT_ADDRESS ||
+const WORDRUSH_CONTRACT_ADDRESS =
+  process.env.WORDRUSH_CONTRACT_ADDRESS ||
   process.env.LEXMASH_CONTRACT_ADDRESS ||
   "";
 const CONTRACT_OPERATOR_PRIVATE_KEY =
@@ -27,8 +31,8 @@ const JOIN_PAYMENT_DISPLAY = process.env.JOIN_PAYMENT_DISPLAY || "0.001 CELO";
 const ENTRY_FEE = JOIN_PAYMENT_DISPLAY;
 const REQUIRE_ONCHAIN_ROOM = process.env.REQUIRE_ONCHAIN_ROOM !== "false";
 const rooms = new Map();
-const wordPotContract = createWordPotContractService({
-  contractAddress: WORDPOT_CONTRACT_ADDRESS,
+const wordrushContract = createWordPotContractService({
+  contractAddress: WORDRUSH_CONTRACT_ADDRESS,
   operatorPrivateKey: CONTRACT_OPERATOR_PRIVATE_KEY,
   rpcUrl: CELO_MAINNET_RPC_URL,
 });
@@ -199,7 +203,7 @@ function getRoomSummary(room) {
     onchain: {
       chainId: CELO_CHAIN_ID,
       treasuryWallet: TREASURY_WALLET,
-      contractAddress: WORDPOT_CONTRACT_ADDRESS,
+      contractAddress: WORDRUSH_CONTRACT_ADDRESS,
       contractRoomId: room.contractRoomId || null,
       contractRoomCreateTx: room.contractRoomCreateTx || null,
       contractSettleTx: room.contractSettleTx || null,
@@ -207,21 +211,21 @@ function getRoomSummary(room) {
       contractSettleError: room.contractSettleError || null,
       contractCancelTx: room.contractCancelTx || null,
       contractCancelError: room.contractCancelError || null,
-      contractReady: wordPotContract.enabled,
-      contractOperatorAddress: wordPotContract.enabled
-        ? wordPotContract.account
+      contractReady: wordrushContract.enabled,
+      contractOperatorAddress: wordrushContract.enabled
+        ? wordrushContract.account
         : null,
       joinPaymentWei: JOIN_PAYMENT_WEI,
       joinPaymentDisplay: JOIN_PAYMENT_DISPLAY,
       joinMode:
-        isWalletAddress(WORDPOT_CONTRACT_ADDRESS) &&
-        wordPotContract.enabled &&
+        isWalletAddress(WORDRUSH_CONTRACT_ADDRESS) &&
+        wordrushContract.enabled &&
         room.contractRoomId
           ? "contract_join"
           : "contract_unavailable",
       payoutMode:
-        isWalletAddress(WORDPOT_CONTRACT_ADDRESS) &&
-        wordPotContract.enabled &&
+        isWalletAddress(WORDRUSH_CONTRACT_ADDRESS) &&
+        wordrushContract.enabled &&
         room.contractRoomId
         ? "contract_claim"
         : "contract_unavailable",
@@ -351,19 +355,19 @@ app.get("/api/meta", (_req, res) => {
     onchain: {
       chainId: CELO_CHAIN_ID,
       treasuryWallet: TREASURY_WALLET,
-      contractAddress: WORDPOT_CONTRACT_ADDRESS,
-      contractReady: wordPotContract.enabled,
-      contractOperatorAddress: wordPotContract.enabled
-        ? wordPotContract.account
+      contractAddress: WORDRUSH_CONTRACT_ADDRESS,
+      contractReady: wordrushContract.enabled,
+      contractOperatorAddress: wordrushContract.enabled
+        ? wordrushContract.account
         : null,
       joinPaymentWei: JOIN_PAYMENT_WEI,
       joinPaymentDisplay: JOIN_PAYMENT_DISPLAY,
       joinMode:
-        isWalletAddress(WORDPOT_CONTRACT_ADDRESS) && wordPotContract.enabled
+        isWalletAddress(WORDRUSH_CONTRACT_ADDRESS) && wordrushContract.enabled
           ? "contract_join"
           : "contract_unavailable",
       payoutMode:
-        isWalletAddress(WORDPOT_CONTRACT_ADDRESS) && wordPotContract.enabled
+        isWalletAddress(WORDRUSH_CONTRACT_ADDRESS) && wordrushContract.enabled
         ? "contract_claim"
         : "contract_unavailable",
     },
@@ -402,7 +406,7 @@ app.post("/api/rooms/quick-match", async (req, res) => {
   if (!room) {
     if (
       REQUIRE_ONCHAIN_ROOM &&
-      (!isWalletAddress(WORDPOT_CONTRACT_ADDRESS) || !wordPotContract.enabled)
+      (!isWalletAddress(WORDRUSH_CONTRACT_ADDRESS) || !wordrushContract.enabled)
     ) {
       return res.status(503).json({
         error:
@@ -429,9 +433,9 @@ app.post("/api/rooms/quick-match", async (req, res) => {
       contractRoomCreateTx: null,
     };
 
-    if (wordPotContract.enabled && isWalletAddress(WORDPOT_CONTRACT_ADDRESS)) {
+    if (wordrushContract.enabled && isWalletAddress(WORDRUSH_CONTRACT_ADDRESS)) {
       try {
-        const contractRoom = await wordPotContract.createRoom(JOIN_PAYMENT_WEI);
+        const contractRoom = await wordrushContract.createRoom(JOIN_PAYMENT_WEI);
         room.contractRoomId = contractRoom?.roomId ?? null;
         room.contractRoomCreateTx = contractRoom?.hash ?? null;
 
@@ -547,7 +551,7 @@ app.post("/api/rooms/:roomId/start", async (req, res) => {
   return res.json({ room: getRoomSummary(room) });
 });
 
-app.post("/api/rooms/:roomId/submit", (req, res) => {
+app.post("/api/rooms/:roomId/submit", async (req, res) => {
   const room = getRoomOr404(req.params.roomId, res);
   const playerId = String(req.body?.playerId || "").trim();
   const walletAddress = String(req.body?.walletAddress || "").trim();
@@ -608,6 +612,18 @@ app.post("/api/rooms/:roomId/submit", (req, res) => {
     return res
       .status(400)
       .json({ error: "That word cannot be formed from the source word." });
+  }
+
+  const existsInDictionaryApi = await isValidDictionaryWordViaApi(rawWord);
+  if (!existsInDictionaryApi) {
+    logEvent({
+      status: "rejected",
+      word: rawWord,
+      reason: "Not found in dictionary API",
+    });
+    return res
+      .status(400)
+      .json({ error: "That word is not in the dictionary." });
   }
 
   if (!room.validWords.includes(rawWord)) {
@@ -740,8 +756,8 @@ app.post("/api/rooms/:roomId/settle", async (req, res) => {
   }
 
   if (
-    !wordPotContract.enabled ||
-    !isWalletAddress(WORDPOT_CONTRACT_ADDRESS) ||
+    !wordrushContract.enabled ||
+    !isWalletAddress(WORDRUSH_CONTRACT_ADDRESS) ||
     !room.contractRoomId
   ) {
     return res.status(503).json({
@@ -751,7 +767,7 @@ app.post("/api/rooms/:roomId/settle", async (req, res) => {
 
   try {
     const settlement = buildSettlementPayload(room);
-    const settleResult = await wordPotContract.settleRoom(
+    const settleResult = await wordrushContract.settleRoom(
       room.contractRoomId,
       settlement.map((entry) => entry.walletAddress),
       settlement.map((entry) => entry.score),
@@ -815,8 +831,8 @@ app.post("/api/rooms/:roomId/cancel", async (req, res) => {
   const refundedPlayers = [];
 
   if (
-    !wordPotContract.enabled ||
-    !isWalletAddress(WORDPOT_CONTRACT_ADDRESS) ||
+    !wordrushContract.enabled ||
+    !isWalletAddress(WORDRUSH_CONTRACT_ADDRESS) ||
     !room.contractRoomId
   ) {
     return res.status(503).json({
@@ -827,7 +843,7 @@ app.post("/api/rooms/:roomId/cancel", async (req, res) => {
 
   try {
     const playerAddresses = room.players.map((p) => p.walletAddress);
-    const cancelResult = await wordPotContract.cancelRoom(
+    const cancelResult = await wordrushContract.cancelRoom(
       room.contractRoomId,
       playerAddresses,
     );
