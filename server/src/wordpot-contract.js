@@ -18,7 +18,7 @@ function isAddress(value) {
 // MVP: Mock contract service (no real contract needed yet)
 export function createWordPotContractService(options) {
   const contractAddress = String(options?.contractAddress || "").trim();
-  const rpcUrl = String(options?.rpcUrl || "https://forno.celo.org").trim();
+  const rpcUrl = String(options?.rpcUrl || "https://rpc.portaldot.xyz").trim();
   const operatorKey = normalizePrivateKey(options?.operatorPrivateKey);
 
   // For MVP, contracts are optional

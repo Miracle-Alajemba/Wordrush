@@ -2,7 +2,7 @@
 
 ## Core Game
 
-- Entry display: `0.1 cUSD`
+- Entry display: `0.001 POT`
 - Round time: `60 seconds`
 - Players per room: `2-5`
 - Identity: wallet address
@@ -32,13 +32,13 @@
 ### Stage 1: Beta Join Flow
 
 - players join a room in the app
-- players send a real Celo mainnet transaction from the lobby
+- players send a real Portaldot transaction from the lobby
 - the tx hash is recorded on the room feed and summary
 - this generates real transaction count and fee activity for hackathon scoring
 
 ### Stage 2: Contract Flow
 
-- `WordPotArena.sol` creates rooms with an entry fee
+- the Portaldot game contract creates rooms with an entry fee
 - players join the contract room with value
 - owner settles using room scores
 - players claim rewards onchain

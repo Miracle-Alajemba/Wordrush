@@ -5,7 +5,7 @@ import {
   useAppKitProvider,
 } from "@reown/appkit/react";
 import {
-  CELO_MAINNET_CHAIN_ID,
+  PORTALDOT_MAINNET_CHAIN_ID,
   REOWN_PROJECT_ID,
   WALLET_STORAGE_KEY,
 } from "../config/app-config.js";
@@ -32,7 +32,10 @@ function toHexChainId(chainId) {
   return `0x${Number(chainId).toString(16)}`;
 }
 
-async function ensureCeloMainnet(provider, chainId = CELO_MAINNET_CHAIN_ID) {
+async function ensurePortaldotNetwork(
+  provider,
+  chainId = PORTALDOT_MAINNET_CHAIN_ID,
+) {
   const targetChainId = toHexChainId(chainId);
   const currentChainId = await provider.request({ method: "eth_chainId" });
 
@@ -54,10 +57,10 @@ async function ensureCeloMainnet(provider, chainId = CELO_MAINNET_CHAIN_ID) {
       method: "wallet_addEthereumChain",
       params: [{
         chainId: targetChainId,
-        chainName: "Celo Mainnet",
-        nativeCurrency: { name: "CELO", symbol: "CELO", decimals: 18 },
-        rpcUrls: ["https://forno.celo.org"],
-        blockExplorerUrls: ["https://celoscan.io"],
+        chainName: "Portaldot",
+        nativeCurrency: { name: "POT", symbol: "POT", decimals: 18 },
+        rpcUrls: ["https://rpc.portaldot.xyz"],
+        blockExplorerUrls: ["https://portaldot.subscan.io"],
       }],
     });
   }
@@ -73,8 +76,8 @@ function getWalletProviderName(provider) {
 function getNetworkLabel(chainId) {
   const normalized = parseChainId(chainId);
   if (!normalized) return "Unknown network";
-  if (normalized === CELO_MAINNET_CHAIN_ID) return "Celo Mainnet";
-  if (normalized === 11142220) return "Celo Sepolia";
+  if (normalized === PORTALDOT_MAINNET_CHAIN_ID) return "Portaldot";
+  if (normalized === 11142220) return "Portaldot Testnet";
   return `Chain ${normalized}`;
 }
 
@@ -102,7 +105,9 @@ export function useWalletSession() {
     () => getNetworkLabel(walletChainId),
     [walletChainId],
   );
-  const walletReady = Boolean(walletAddress) && parseChainId(walletChainId) === CELO_MAINNET_CHAIN_ID;
+  const walletReady =
+    Boolean(walletAddress) &&
+    parseChainId(walletChainId) === PORTALDOT_MAINNET_CHAIN_ID;
 
   useEffect(() => {
     const storedWallet =
@@ -126,9 +131,7 @@ export function useWalletSession() {
         setWalletAddress(nextWallet);
         window.localStorage.setItem(WALLET_STORAGE_KEY, nextWallet);
         setWalletStatus(
-          injectedProvider?.isMiniPay
-            ? `MiniPay is available as ${shortenWalletAddress(nextWallet)}.`
-            : "Using previously connected wallet.",
+          "Using previously connected wallet.",
         );
       })
       .catch(() => {});
@@ -151,7 +154,11 @@ export function useWalletSession() {
     function handleChainChanged(chainId) {
       const normalized = parseChainId(chainId);
       setWalletChainId(normalized);
-      setWalletStatus(normalized === CELO_MAINNET_CHAIN_ID ? "Wallet ready on Celo Mainnet." : `Connected on ${getNetworkLabel(normalized)}.`);
+      setWalletStatus(
+        normalized === PORTALDOT_MAINNET_CHAIN_ID
+          ? "Wallet ready on Portaldot."
+          : `Connected on ${getNetworkLabel(normalized)}.`,
+      );
     }
 
     injectedProvider.on("accountsChanged", handleAccountsChanged);
@@ -181,9 +188,9 @@ export function useWalletSession() {
         const normalizedChainId = parseChainId(chainId);
         setWalletChainId(normalizedChainId);
         setWalletStatus(
-          normalizedChainId === CELO_MAINNET_CHAIN_ID
-            ? `Wallet ready on Celo Mainnet as ${shortenWalletAddress(appKitAddress)}.`
-            : `Wallet connected as ${shortenWalletAddress(appKitAddress)}. Switch to Celo Mainnet to continue.`,
+          normalizedChainId === PORTALDOT_MAINNET_CHAIN_ID
+            ? `Wallet ready on Portaldot as ${shortenWalletAddress(appKitAddress)}.`
+            : `Wallet connected as ${shortenWalletAddress(appKitAddress)}. Switch network to continue.`,
         );
       })
       .catch(() => {
@@ -196,14 +203,14 @@ export function useWalletSession() {
       throw new Error("WalletConnect finished without a usable wallet session.");
     }
 
-    setWalletStatus("Wallet connected. Preparing Celo Mainnet...");
-    await ensureCeloMainnet(appKitProvider, CELO_MAINNET_CHAIN_ID);
+    setWalletStatus("Wallet connected. Preparing Portaldot...");
+    await ensurePortaldotNetwork(appKitProvider, PORTALDOT_MAINNET_CHAIN_ID);
     const chainId = await appKitProvider.request({ method: "eth_chainId" });
     const normalizedChainId = parseChainId(chainId);
 
     setWalletAddress(appKitAddress);
     setWalletChainId(normalizedChainId);
-    setWalletStatus(`Ready on Celo Mainnet as ${shortenWalletAddress(appKitAddress)}`);
+    setWalletStatus(`Ready on Portaldot as ${shortenWalletAddress(appKitAddress)}`);
     if (typeof window !== "undefined") {
       window.localStorage.setItem(WALLET_STORAGE_KEY, appKitAddress);
     }
@@ -229,11 +236,11 @@ export function useWalletSession() {
     }
 
     try {
-      setWalletStatus(provider.isMiniPay ? "Requesting MiniPay connection..." : "Requesting wallet connection...");
+      setWalletStatus("Requesting wallet connection...");
       const accounts = await provider.request({
         method: "eth_requestAccounts",
       });
-      const walletClient = createInjectedWalletClient(CELO_MAINNET_CHAIN_ID);
+      const walletClient = createInjectedWalletClient(PORTALDOT_MAINNET_CHAIN_ID);
       const clientAddresses = walletClient ? await walletClient.getAddresses() : [];
       const nextWallet = clientAddresses?.[0] || accounts?.[0] || "";
 
@@ -241,16 +248,14 @@ export function useWalletSession() {
         throw new Error("Connected account is not a valid wallet address.");
       }
 
-      setWalletStatus(provider.isMiniPay ? "MiniPay connected. Preparing Celo Mainnet..." : "Wallet connected. Preparing Celo Mainnet...");
-      await ensureCeloMainnet(provider, CELO_MAINNET_CHAIN_ID);
+      setWalletStatus("Wallet connected. Preparing Portaldot...");
+      await ensurePortaldotNetwork(provider, PORTALDOT_MAINNET_CHAIN_ID);
       const chainId = await provider.request({ method: "eth_chainId" });
 
       setWalletAddress(nextWallet);
       setWalletChainId(parseChainId(chainId));
       setWalletStatus(
-        provider.isMiniPay
-          ? `MiniPay ready on Celo Mainnet as ${shortenWalletAddress(nextWallet)}`
-          : `Ready on Celo Mainnet as ${shortenWalletAddress(nextWallet)}`,
+        `Ready on Portaldot as ${shortenWalletAddress(nextWallet)}`,
       );
       window.localStorage.setItem(WALLET_STORAGE_KEY, nextWallet);
     } catch (error) {
@@ -282,10 +287,11 @@ export function useWalletSession() {
     walletReady,
     connectWallet,
     disconnectWallet,
-    ensureCeloMainnet,
+    ensurePortaldotNetwork,
+    ensureCeloMainnet: ensurePortaldotNetwork,
     parseChainId,
     getInjectedProvider: () => provider,
-    getWalletClient: (chainId = CELO_MAINNET_CHAIN_ID) =>
+    getWalletClient: (chainId = PORTALDOT_MAINNET_CHAIN_ID) =>
       provider?.request
         ? createWalletClientFromProvider(provider, chainId)
         : createInjectedWalletClient(chainId),

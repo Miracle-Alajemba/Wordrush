@@ -23,18 +23,22 @@ const WORDRUSH_CONTRACT_ADDRESS =
   "";
 const CONTRACT_OPERATOR_PRIVATE_KEY =
   process.env.CONTRACT_OPERATOR_PRIVATE_KEY || "";
-const CELO_MAINNET_RPC_URL =
-  process.env.CELO_MAINNET_RPC_URL || "https://forno.celo.org";
-const CELO_CHAIN_ID = Number(process.env.CELO_CHAIN_ID || 42220);
+const PORTALDOT_RPC_URL =
+  process.env.PORTALDOT_RPC_URL ||
+  process.env.CELO_MAINNET_RPC_URL ||
+  "https://rpc.portaldot.xyz";
+const PORTALDOT_CHAIN_ID = Number(
+  process.env.PORTALDOT_CHAIN_ID || process.env.CELO_CHAIN_ID || 42220,
+);
 const JOIN_PAYMENT_WEI = process.env.JOIN_PAYMENT_WEI || "1000000000000000";
-const JOIN_PAYMENT_DISPLAY = process.env.JOIN_PAYMENT_DISPLAY || "0.001 CELO";
+const JOIN_PAYMENT_DISPLAY = process.env.JOIN_PAYMENT_DISPLAY || "0.001 POT";
 const ENTRY_FEE = JOIN_PAYMENT_DISPLAY;
 const REQUIRE_ONCHAIN_ROOM = process.env.REQUIRE_ONCHAIN_ROOM !== "false";
 const rooms = new Map();
 const wordrushContract = createWordPotContractService({
   contractAddress: WORDRUSH_CONTRACT_ADDRESS,
   operatorPrivateKey: CONTRACT_OPERATOR_PRIVATE_KEY,
-  rpcUrl: CELO_MAINNET_RPC_URL,
+  rpcUrl: PORTALDOT_RPC_URL,
 });
 
 app.use(cors());
@@ -181,7 +185,7 @@ function getRoomSummary(room) {
     roundDurationSeconds: ROUND_SECONDS,
     hostPlayerId: room.hostPlayerId,
     sourceWord: room.sourceWord || null,
-    rewardPool: `${getRewardPool(room.players.length)} CELO`,
+    rewardPool: `${getRewardPool(room.players.length)} POT`,
     createdAt: room.createdAt,
     startedAt: room.startedAt || null,
     endsAt: room.endsAt || null,
@@ -201,7 +205,7 @@ function getRoomSummary(room) {
     scoreboard: getScoreboard(room),
     payouts: room.status === "finished" ? getPayouts(room) : [],
     onchain: {
-      chainId: CELO_CHAIN_ID,
+      chainId: PORTALDOT_CHAIN_ID,
       treasuryWallet: TREASURY_WALLET,
       contractAddress: WORDRUSH_CONTRACT_ADDRESS,
       contractRoomId: room.contractRoomId || null,
@@ -353,7 +357,7 @@ app.get("/api/meta", (_req, res) => {
     maxPlayers: MAX_PLAYERS,
     minWordLength: 3,
     onchain: {
-      chainId: CELO_CHAIN_ID,
+      chainId: PORTALDOT_CHAIN_ID,
       treasuryWallet: TREASURY_WALLET,
       contractAddress: WORDRUSH_CONTRACT_ADDRESS,
       contractReady: wordrushContract.enabled,
@@ -446,7 +450,7 @@ app.post("/api/rooms/quick-match", async (req, res) => {
         pushSystemEvent(
           room,
           room.contractRoomId
-            ? `Onchain room ${room.contractRoomId} opened on WordPotArena`
+            ? `Onchain room ${room.contractRoomId} opened on Portaldot`
             : "Onchain room creation submitted",
         );
       } catch (error) {

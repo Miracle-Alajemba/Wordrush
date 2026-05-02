@@ -8,7 +8,7 @@ reward pool. This version brings WordPot to the Polkadot ecosystem.
 
 🚀 **Building for Portaldot Mini Hackathon (Deadline: May 31, 2026)**
 
-Original Celo version: https://wordpot.vercel.app/
+Legacy build reference: https://wordpot.vercel.app/
 
 ## Stack
 
@@ -74,11 +74,11 @@ cd client && npm run dev
 cd ../server && npm run dev
 ```
 
-## Original Celo Version
+## Legacy Version
 
 - App: https://wordpot.vercel.app/
 - Contract: `0x764b3f8761CEB44e6FFA6480484b706C3c3A8284`
-- Mainnet: Celo
+- Mainnet: Portaldot (current target)
   - supports score-based reward claims after settlement
 
 ## Project Structure
@@ -90,7 +90,7 @@ cd ../server && npm run dev
 
 ## Prize Model
 
-- Offchain game entry display: `0.1 cUSD`
+- Offchain game entry display: `0.001 POT`
 - Treasury cut: `10%`
 - Reward pool: `90%`
 - Payout formula:
@@ -103,7 +103,7 @@ Create `server/.env` from `server/.env.example` and set:
 
 - `TREASURY_WALLET`
 - `WORDPOT_CONTRACT_ADDRESS`
-- `CELO_CHAIN_ID`
+- `PORTALDOT_CHAIN_ID`
 - `JOIN_PAYMENT_WEI`
 - `JOIN_PAYMENT_DISPLAY`
 
@@ -131,7 +131,7 @@ npm run dev
 
 ## Next Upgrade
 
-- deploy `WordPotArena.sol`
+- deploy Portaldot game contract
 - switch join flow from treasury beta to contract entry
 - add claim reward transaction flow in the results screen
 - move room sync from polling to sockets

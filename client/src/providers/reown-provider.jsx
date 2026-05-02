@@ -9,7 +9,7 @@ const queryClient = new QueryClient();
 
 const metadata = {
   name: "WordPot",
-  description: "MiniPay-first multiplayer word game on Celo",
+  description: "Portaldot multiplayer word game with onchain rewards",
   url: APP_URL,
   icons: [
     "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' rx='26' fill='%230b1220'/%3E%3Ctext x='50%25' y='56%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial,sans-serif' font-size='42' font-weight='700' fill='%23f8f9fa'%3EWP%3C/text%3E%3C/svg%3E",

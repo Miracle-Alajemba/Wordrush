@@ -11,7 +11,7 @@ import {
 } from "./components/screens/index.js";
 import {
   API_BASE_URL,
-  CELO_MAINNET_CHAIN_ID,
+  PORTALDOT_MAINNET_CHAIN_ID,
   GAME_RULES,
 } from "./config/index.js";
 import { useWalletSession } from "./hooks/index.js";
@@ -37,7 +37,7 @@ export default function App() {
   const [settings, setSettings] = useState({
     sound: true,
     haptics: true,
-    darkMode: true,
+    darkMode: false,
     highContrast: false,
     largeText: false,
     showEarnings: true,
@@ -53,7 +53,7 @@ export default function App() {
     walletReady,
     connectWallet,
     disconnectWallet,
-    ensureCeloMainnet,
+    ensurePortaldotNetwork,
     getInjectedProvider,
     getWalletClient,
     getPublicClient,
@@ -67,7 +67,7 @@ export default function App() {
 
   const walletConnectLabel = walletReady ? "Connected" : "Connect Wallet";
   const walletEnvironmentHint = walletReady
-    ? "Ready on Celo Mainnet"
+    ? "Ready on Portaldot"
     : "Connect your wallet to join live rooms";
   const paymentProviderLabel = "Join";
 
@@ -230,7 +230,7 @@ export default function App() {
 
     const provider = getInjectedProvider();
     if (!provider?.request) {
-      setRoomError("Open WordPot inside MiniPay or a wallet browser to pay onchain.");
+      setRoomError("Open WordPot inside a wallet browser to pay onchain.");
       return;
     }
 
@@ -244,7 +244,7 @@ export default function App() {
     const contractRoomId = room?.onchain?.contractRoomId;
     const joinMode = room?.onchain?.joinMode || "treasury_beta";
     const joinPaymentWei = room?.onchain?.joinPaymentWei;
-    const joinPaymentDisplay = room?.onchain?.joinPaymentDisplay || "0.001 CELO";
+    const joinPaymentDisplay = room?.onchain?.joinPaymentDisplay || "0.001 POT";
 
     if (
       joinMode === "contract_join" &&
@@ -267,12 +267,16 @@ export default function App() {
       setRoomError("");
       setRoomMessage(
         isMiniPay
-          ? "MiniPay will ask you to confirm the room entry payment."
+          ? "Your wallet will ask you to confirm the room entry payment."
           : "Confirm the entry payment in your wallet...",
       );
 
-      await ensureCeloMainnet(provider, room?.onchain?.chainId || CELO_MAINNET_CHAIN_ID);
-      const targetChainId = room?.onchain?.chainId || CELO_MAINNET_CHAIN_ID;
+      await ensurePortaldotNetwork(
+        provider,
+        room?.onchain?.chainId || PORTALDOT_MAINNET_CHAIN_ID,
+      );
+      const targetChainId =
+        room?.onchain?.chainId || PORTALDOT_MAINNET_CHAIN_ID;
       const walletClient = getWalletClient(targetChainId);
       const publicClient = getPublicClient(targetChainId);
 
@@ -300,7 +304,7 @@ export default function App() {
         await publicClient.waitForTransactionReceipt({ hash: txHash });
       } else {
         if (joinMode === "contract_join") {
-          setRoomError("Contract join requires the MiniPay-compatible wallet client path.");
+          setRoomError("Contract join requires a supported injected wallet client path.");
           return;
         }
 
@@ -337,8 +341,8 @@ export default function App() {
       setRoomMessage(
         isMiniPay
           ? joinMode === "contract_join"
-            ? "MiniPay contract join confirmed. Your seat is now locked in."
-            : "MiniPay payment confirmed. Your seat is now locked in."
+            ? "Contract join confirmed. Your seat is now locked in."
+            : "Payment confirmed. Your seat is now locked in."
           : joinMode === "contract_join"
             ? "Contract join confirmed. Your seat is now locked in."
             : "Entry confirmed. Your seat is now locked in.",
@@ -479,7 +483,7 @@ export default function App() {
 
     const provider = getInjectedProvider();
     if (!provider?.request) {
-      setRoomError("Open WordPot inside MiniPay or a wallet browser to claim your reward.");
+      setRoomError("Open WordPot inside a supported wallet browser to claim your reward.");
       return;
     }
 
@@ -488,7 +492,7 @@ export default function App() {
       setRoomError("");
       setRoomMessage(
         isMiniPay
-          ? "MiniPay will finalize scores onchain, then ask you to confirm the reward claim."
+          ? "Your wallet will finalize scores onchain, then ask you to confirm the reward claim."
           : "Finalizing scores onchain before reward claim...",
       );
 
@@ -512,12 +516,16 @@ export default function App() {
 
       setRoomMessage(
         isMiniPay
-          ? "MiniPay will now ask you to confirm the reward claim transaction."
+          ? "Your wallet will now ask you to confirm the reward claim transaction."
           : "Confirm the reward claim in your wallet...",
       );
 
-      await ensureCeloMainnet(provider, room?.onchain?.chainId || CELO_MAINNET_CHAIN_ID);
-      const targetChainId = room?.onchain?.chainId || CELO_MAINNET_CHAIN_ID;
+      await ensurePortaldotNetwork(
+        provider,
+        room?.onchain?.chainId || PORTALDOT_MAINNET_CHAIN_ID,
+      );
+      const targetChainId =
+        room?.onchain?.chainId || PORTALDOT_MAINNET_CHAIN_ID;
       const walletClient = getWalletClient(targetChainId);
       const publicClient = getPublicClient(targetChainId);
 
@@ -538,7 +546,7 @@ export default function App() {
         // Wait for the transaction to be confirmed on the blockchain
         await publicClient.waitForTransactionReceipt({ hash: txHash });
       } else {
-        setRoomError("Wallet client not available. Please use MiniPay or MetaMask.");
+        setRoomError("Wallet client not available. Please use a supported wallet.");
         return;
       }
 
@@ -563,8 +571,8 @@ export default function App() {
       setRoom(recordData.room);
       setRoomMessage(
         isMiniPay
-          ? `MiniPay claim confirmed! You will receive ${myPayout.amount} CELO. TX: ${txHash.slice(0, 10)}...`
-          : `Claim confirmed! You will receive ${myPayout.amount} CELO. TX: ${txHash.slice(0, 10)}...`,
+          ? `Claim confirmed! You will receive ${myPayout.amount} POT. TX: ${txHash.slice(0, 10)}...`
+          : `Claim confirmed! You will receive ${myPayout.amount} POT. TX: ${txHash.slice(0, 10)}...`,
       );
     } catch (error) {
       setRoomError(error.message || "Unable to claim reward.");
@@ -623,8 +631,6 @@ export default function App() {
       onDisconnectWallet={disconnectWallet}
       walletHint={walletHint}
       roomError={roomError}
-      darkMode={settings.darkMode}
-      onToggleTheme={() => toggleSetting("darkMode")}
     />
   );
 
@@ -697,7 +703,7 @@ export default function App() {
   return (
     <div
       className={[
-        settings.darkMode ? "app-dark-mode" : "app-light-mode",
+        "app-light-mode",
         settings.largeText ? "app-text-scale" : "",
         settings.highContrast ? "app-high-contrast" : "",
       ].filter(Boolean).join(" ")}

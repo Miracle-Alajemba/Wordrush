@@ -56,8 +56,6 @@ export function HomeScreen({
   onDisconnectWallet,
   walletHint,
   roomError,
-  darkMode,
-  onToggleTheme,
 }) {
   const joinLabel = isMiniPay && hasInjectedProvider
     ? walletReady
@@ -67,23 +65,14 @@ export function HomeScreen({
     ? walletConnectLabel || "Connect Wallet to Join"
     : walletReady
       ? "Join Game"
-      : "Switch to Celo to Join";
+      : "Switch network to Join";
 
   return (
     <main className="page-shell">
       <section className="hero">
         <div className="hero-copy">
           <div className="hero-copy__top">
-            <p className="eyebrow">MiniPay Word Game</p>
-            <button
-              type="button"
-              className="theme-toggle hero-theme-toggle"
-              onClick={onToggleTheme}
-              aria-label={`Switch to ${darkMode ? "light" : "dark"} mode`}
-            >
-              <span className={`theme-toggle__option ${darkMode ? "theme-toggle__option--active" : ""}`}>Dark</span>
-              <span className={`theme-toggle__option ${!darkMode ? "theme-toggle__option--active" : ""}`}>Light</span>
-            </button>
+            <p className="eyebrow">Portaldot Word Game</p>
           </div>
           <h1>WordPot</h1>
           <p className="lede">
@@ -113,7 +102,7 @@ export function HomeScreen({
 
           {!hasInjectedProvider && !walletAddress ? (
             <div className="notice-strip notice-strip--neutral">
-              Connect with MiniPay or any supported wallet to join live rooms.
+              Connect with a supported wallet to join live rooms.
             </div>
           ) : null}
 
@@ -134,12 +123,12 @@ export function HomeScreen({
               </div>
               <p className="field-hint">
                 {walletHint ||
-                  "Connect your MiniPay-compatible wallet so rooms use your real onchain identity."}
+                  "Connect your wallet so rooms use your real onchain identity."}
               </p>
             </div>
             <div className="wallet-panel__actions">
               <button type="button" onClick={onConnectWallet}>
-                {walletAddress ? (walletReady ? "Reconnect Wallet" : "Switch to Celo") : walletConnectLabel || "Connect Wallet"}
+                {walletAddress ? (walletReady ? "Reconnect Wallet" : "Switch Network") : walletConnectLabel || "Connect Wallet"}
               </button>
               {walletAddress ? (
                 <button
@@ -160,7 +149,7 @@ export function HomeScreen({
 
           <div className="feature-strip">
             <div className="feature-pill">60 second rounds</div>
-            <div className="feature-pill">0.001 CELO entry</div>
+            <div className="feature-pill">0.001 POT entry</div>
             <div className="feature-pill">90% split by score</div>
             <div className="feature-pill">Live room chat</div>
             <div className="feature-pill">Free practice arena</div>
@@ -181,7 +170,7 @@ export function HomeScreen({
           </div>
           <div className="hero-card__grid">
             <span>Timer: 60s</span>
-            <span>Stake: 0.001 CELO</span>
+            <span>Stake: 0.001 POT</span>
             <span>Players: 2-5</span>
             <span>Pool: 90% shared by score</span>
           </div>
@@ -230,7 +219,7 @@ export function HomeScreen({
         <article className="panel panel-wide">
           <h3>Prize Logic</h3>
           <p>
-            Every room starts with a small CELO entry from each player. WordPot
+            Every room starts with a small POT entry from each player. WordPot
             keeps a 10% treasury fee, and the remaining 90% is shared using a
             simple formula: your score divided by total room score, multiplied by
             the reward pool.
@@ -283,7 +272,7 @@ export function LobbyScreen({
   const joinMode = room?.onchain?.joinMode || "treasury_beta";
   const canStart =
     room?.status === "waiting" && enoughPlayers && isHost && allPaid;
-  const joinPayment = room?.onchain?.joinPaymentDisplay || "0.001 CELO";
+  const joinPayment = room?.onchain?.joinPaymentDisplay || "0.001 POT";
   const hasPaid = (room?.onchain?.joinTransactions || []).some((entry) => entry.playerId === playerId);
   const unpaidPlayers = (room?.players || []).filter((entry) => !entry.joinPaid);
   const unpaidCount = unpaidPlayers.length;
@@ -322,7 +311,7 @@ export function LobbyScreen({
             <h1>{room?.id || "LOADING"}</h1>
           </div>
           <div className="room-topbar__stats">
-            <span>{room?.entryFee || "0.001 CELO"}</span>
+            <span>{room?.entryFee || "0.001 POT"}</span>
             <span>{room?.rewardPool || "--"}</span>
             <span>{room?.players?.length || 0}/{room?.maxPlayers || 5} players</span>
             <span className={syncMeta.className}>{syncMeta.label}</span>
@@ -364,7 +353,7 @@ export function LobbyScreen({
             <div className="lobby-summary-grid">
               <div className="lobby-stat-card">
                 <span>Entry Fee</span>
-                <strong>{room?.entryFee || "0.001 CELO"}</strong>
+                <strong>{room?.entryFee || "0.001 POT"}</strong>
               </div>
               <div className="lobby-stat-card">
                 <span>Prize Pool</span>
@@ -390,7 +379,7 @@ export function LobbyScreen({
 
             <div className="notice-strip notice-strip--neutral">
               {joinMode === "contract_join"
-                ? `Contract room ${room?.onchain?.contractRoomId ?? "--"} is live on WordPotArena. Players join this room onchain before the match starts.`
+                ? `Contract room ${room?.onchain?.contractRoomId ?? "--"} is live on Portaldot. Players join this room onchain before the match starts.`
                 : "Treasury beta mode is active for this room while contract-backed joins are still being prepared."}
             </div>
 
@@ -604,7 +593,7 @@ export function MatchRoomScreen({
           <div className="room-topbar__stats">
             <span>{room?.players?.length || 0}/{room?.maxPlayers || 5} players online</span>
             <span>{room?.rewardPool || "--"}</span>
-            <span>{room?.entryFee || "0.001 CELO"}</span>
+            <span>{room?.entryFee || "0.001 POT"}</span>
             <span className={syncMeta.className}>{syncMeta.label}</span>
           </div>
         </div>
@@ -770,7 +759,7 @@ export function MatchRoomScreen({
                 <div className="claim-card__top">
                   <div>
                     <span className="claim-card__label">Your reward</span>
-                    <strong className="claim-card__amount">{payoutAmount.toFixed(4)} CELO</strong>
+                    <strong className="claim-card__amount">{payoutAmount.toFixed(4)} POT</strong>
                   </div>
                   <span className={`claim-card__status ${claimRecorded ? "claim-card__status--success" : payoutAmount > 0 ? "claim-card__status--ready" : ""}`}>
                     {claimStatusTitle}
@@ -825,7 +814,7 @@ export function MatchRoomScreen({
                       <strong>{getPlayerAlias(entry.walletAddress)}</strong>
                       <p>{shortenWalletAddress(entry.walletAddress)}</p>
                     </div>
-                    <span className="self-pill">{entry.amount} CELO</span>
+                    <span className="self-pill">{entry.amount} POT</span>
                   </div>
                 ))}
               </div>
