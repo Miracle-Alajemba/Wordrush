@@ -34,11 +34,15 @@ const JOIN_PAYMENT_WEI = process.env.JOIN_PAYMENT_WEI || "1000000000000000";
 const JOIN_PAYMENT_DISPLAY = process.env.JOIN_PAYMENT_DISPLAY || "0.001 POT";
 const ENTRY_FEE = JOIN_PAYMENT_DISPLAY;
 const REQUIRE_ONCHAIN_ROOM = process.env.REQUIRE_ONCHAIN_ROOM !== "false";
+const PORTALDOT_LOCAL_DEV =
+  process.env.PORTALDOT_LOCAL_DEV === "true" ||
+  /127\.0\.0\.1|localhost/.test(PORTALDOT_RPC_URL);
 const rooms = new Map();
 const wordrushContract = createWordPotContractService({
   contractAddress: WORDRUSH_CONTRACT_ADDRESS,
   operatorPrivateKey: CONTRACT_OPERATOR_PRIVATE_KEY,
   rpcUrl: PORTALDOT_RPC_URL,
+  localDevMode: PORTALDOT_LOCAL_DEV,
 });
 
 app.use(cors());
@@ -222,17 +226,17 @@ function getRoomSummary(room) {
       joinPaymentWei: JOIN_PAYMENT_WEI,
       joinPaymentDisplay: JOIN_PAYMENT_DISPLAY,
       joinMode:
-        isWalletAddress(WORDRUSH_CONTRACT_ADDRESS) &&
-        wordrushContract.enabled &&
-        room.contractRoomId
+        ((isWalletAddress(WORDRUSH_CONTRACT_ADDRESS) || PORTALDOT_LOCAL_DEV) &&
+          wordrushContract.enabled &&
+          room.contractRoomId)
           ? "contract_join"
           : "contract_unavailable",
       payoutMode:
-        isWalletAddress(WORDRUSH_CONTRACT_ADDRESS) &&
-        wordrushContract.enabled &&
-        room.contractRoomId
-        ? "contract_claim"
-        : "contract_unavailable",
+        ((isWalletAddress(WORDRUSH_CONTRACT_ADDRESS) || PORTALDOT_LOCAL_DEV) &&
+          wordrushContract.enabled &&
+          room.contractRoomId)
+          ? "contract_claim"
+          : "contract_unavailable",
       joinTransactions: room.joinTransactions || [],
       claimTransactions: room.claimTransactions || [],
       refundTransactions: room.refundTransactions || [],
@@ -367,13 +371,15 @@ app.get("/api/meta", (_req, res) => {
       joinPaymentWei: JOIN_PAYMENT_WEI,
       joinPaymentDisplay: JOIN_PAYMENT_DISPLAY,
       joinMode:
-        isWalletAddress(WORDRUSH_CONTRACT_ADDRESS) && wordrushContract.enabled
+        (isWalletAddress(WORDRUSH_CONTRACT_ADDRESS) || PORTALDOT_LOCAL_DEV) &&
+        wordrushContract.enabled
           ? "contract_join"
           : "contract_unavailable",
       payoutMode:
-        isWalletAddress(WORDRUSH_CONTRACT_ADDRESS) && wordrushContract.enabled
-        ? "contract_claim"
-        : "contract_unavailable",
+        (isWalletAddress(WORDRUSH_CONTRACT_ADDRESS) || PORTALDOT_LOCAL_DEV) &&
+        wordrushContract.enabled
+          ? "contract_claim"
+          : "contract_unavailable",
     },
   });
 });
@@ -410,7 +416,8 @@ app.post("/api/rooms/quick-match", async (req, res) => {
   if (!room) {
     if (
       REQUIRE_ONCHAIN_ROOM &&
-      (!isWalletAddress(WORDRUSH_CONTRACT_ADDRESS) || !wordrushContract.enabled)
+      (!(isWalletAddress(WORDRUSH_CONTRACT_ADDRESS) || PORTALDOT_LOCAL_DEV) ||
+        !wordrushContract.enabled)
     ) {
       return res.status(503).json({
         error:
@@ -437,7 +444,10 @@ app.post("/api/rooms/quick-match", async (req, res) => {
       contractRoomCreateTx: null,
     };
 
-    if (wordrushContract.enabled && isWalletAddress(WORDRUSH_CONTRACT_ADDRESS)) {
+    if (
+      wordrushContract.enabled &&
+      (isWalletAddress(WORDRUSH_CONTRACT_ADDRESS) || PORTALDOT_LOCAL_DEV)
+    ) {
       try {
         const contractRoom = await wordrushContract.createRoom(JOIN_PAYMENT_WEI);
         room.contractRoomId = contractRoom?.roomId ?? null;
