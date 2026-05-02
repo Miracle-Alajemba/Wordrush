@@ -17,24 +17,34 @@ const metadata = {
 };
 
 const networks = [celo];
+let wagmiAdapter = null;
 
-const wagmiAdapter = new WagmiAdapter({
-  projectId: REOWN_PROJECT_ID,
-  networks,
-  ssr: false,
-});
+try {
+  wagmiAdapter = new WagmiAdapter({
+    projectId: REOWN_PROJECT_ID,
+    networks,
+    ssr: false,
+  });
 
-createAppKit({
-  adapters: [wagmiAdapter],
-  networks,
-  projectId: REOWN_PROJECT_ID,
-  metadata,
-  features: {
-    analytics: true,
-  },
-});
+  createAppKit({
+    adapters: [wagmiAdapter],
+    networks,
+    projectId: REOWN_PROJECT_ID,
+    metadata,
+    features: {
+      analytics: true,
+    },
+  });
+} catch (error) {
+  // Keep the app booting even if wallet SDK initialization fails.
+  console.error("Reown provider initialization failed:", error);
+}
 
 export function ReownProvider({ children }) {
+  if (!wagmiAdapter?.wagmiConfig) {
+    return <>{children}</>;
+  }
+
   return (
     <WagmiProvider config={wagmiAdapter.wagmiConfig}>
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
