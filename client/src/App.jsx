@@ -11,10 +11,10 @@ import {
 } from "./components/screens/index.js";
 import {
   API_BASE_URL,
+  CELO_MAINNET_CHAIN_ID,
   GAME_RULES,
-  WALLET_STORAGE_KEY,
-  ROOM_SESSION_STORAGE_KEY,
 } from "./config/index.js";
+import { useWalletSession } from "./hooks/index.js";
 import {
   clearRoomSession,
   isWalletAddress,
@@ -23,14 +23,7 @@ import {
   shortenWalletAddress,
 } from "./utils/index.js";
 
-// MVP: Mock wallet for development/testing
-const generateMockWallet = () => {
-  const existing = localStorage.getItem("wordrush_test_wallet");
-  if (existing) return existing;
-  const mock = `0x${Array(40).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join('')}`;
-  localStorage.setItem("wordrush_test_wallet", mock);
-  return mock;
-};
+const zeroAddress = "0x0000000000000000000000000000000000000000";
 
 export default function App() {
   const [screen, setScreen] = useState("home");
@@ -50,26 +43,32 @@ export default function App() {
     showEarnings: true,
     showRank: true,
   });
-  
-  // MVP: Simple mock wallet instead of complex wallet session
-  const [walletAddress, setWalletAddress] = useState(() => 
-    localStorage.getItem(WALLET_STORAGE_KEY) || generateMockWallet()
-  );
-
-  // Save wallet to storage when it changes
-  useEffect(() => {
-    localStorage.setItem(WALLET_STORAGE_KEY, walletAddress);
-  }, [walletAddress]);
-  
-  const walletReady = true; // MVP: Always ready
-  const walletStatus = "connected"; // MVP: Always connected
+  const {
+    walletAddress,
+    walletStatus,
+    hasInjectedProvider,
+    isMiniPay,
+    walletProviderName,
+    walletNetworkLabel,
+    walletReady,
+    connectWallet,
+    disconnectWallet,
+    ensureCeloMainnet,
+    getInjectedProvider,
+    getWalletClient,
+    getPublicClient,
+  } = useWalletSession();
   
   const walletHint = useMemo(() => {
-    return `Playing as ${shortenWalletAddress(walletAddress)}`;
+    return isWalletAddress(walletAddress)
+      ? `Playing as ${shortenWalletAddress(walletAddress)}`
+      : "Connect wallet to play";
   }, [walletAddress]);
 
-  const walletConnectLabel = "Connected";
-  const walletEnvironmentHint = "MVP: Local game mode";
+  const walletConnectLabel = walletReady ? "Connected" : "Connect Wallet";
+  const walletEnvironmentHint = walletReady
+    ? "Ready on Celo Mainnet"
+    : "Connect your wallet to join live rooms";
   const paymentProviderLabel = "Join";
 
   useEffect(() => {
